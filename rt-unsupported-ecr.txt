@@ -1,0 +1,114 @@
+Title: Request to add EFI_UNSUPPORTED to return code statuses for
+       EFI_RUNTIME_SERVICES calls (erratum ECR) Document: UEFI Specification
+Sponsor: Peter Jones, Red Hat, Inc.
+Sponsor: Dong Wei, ARM Ltd.
+
+=====================================
+Summary
+=====================================
+Summary of Change
+-----------------
+
+For embedded devices, such as those specified by the ARM EBBR
+specification, many of the EFI_RUNTIME_SERVICES calls are impractical or
+impossible to implement in such a way that they can be used at runtime.
+On such devices, an OS has a need to detect that this is the case in
+order to alter their behavior appropriately.
+
+This ECR adds EFI_UNSUPPORTED as a return code to each of these calls,
+as well as a definition of what that means, and an EFI variable
+"RuntimeServicesSupported", which the OS can check before calling
+ExitBootServices() in order to probe which runtime services are
+supported.
+
+
+-----------------
+Impact of Change
+-----------------
+This allows embedded platforms to remain in compliance with this
+specification when they cannot implement runtime services calls.  It
+further allows a sufficiently aware OS to detect such a device and take
+alternative measures where needed.
+
+=====================================
+Detailed Description of the Change
+=====================================
+
+In section 2.6.2 ("Platform-Specific Elements"), at the end of the list,
+add the following text:
+
+ 34. If a platform cannot support calls defined in EFI_RUNTIME_SERVICES
+     after ExitBootServices() is called, that platform may provide
+     implementations of those functions which return EFI_UNSUPPORTED during
+     runtime services.  On such systems, before ExitBootServices() is called,
+     EFI_RUNTIME_SERVICES.GetVariable() must be capable of providing the
+     "RuntimeServicesSupported" variable.
+
+Add following entry to the error code tables for each of these functions:
+
+  EFI_RUNTIME_SERVICES.GetTime()
+  EFI_RUNTIME_SERVICES.SetTime()
+  EFI_RUNTIME_SERVICES.GetWakeupTime()
+  EFI_RUNTIME_SERVICES.SetWakeupTime()
+  EFI_RUNTIME_SERVICES.SetVariable()
+  EFI_RUNTIME_SERVICES.SetVirtualAddressMap()
+  EFI_RUNTIME_SERVICES.ConvertPointer()
+  EFI_RUNTIME_SERVICES.GetNextHighMonotonicCount()
+  EFI_RUNTIME_SERVICES.ResetSystem()
+  EFI_RUNTIME_SERVICES.UpdateCapsule()
+  EFI_RUNTIME_SERVICES.QueryCapsuleCapabilities()
+  EFI_RUNTIME_SERVICES.QueryVariableInfo()
+
+ +-----------------+---------------------------------------------------------+
+ | EFI_UNSUPPORTED | This call is not supported by this platform at the time |
+ |                 | the call is made.                                       |
+ +-----------------+---------------------------------------------------------+
+
+Add following entry to the error code tables for each of these functions:
+
+  EFI_RUNTIME_SERVICES.GetVariable()
+  EFI_RUNTIME_SERVICES.GetNextVariableName()
+
+ +-----------------+---------------------------------------------------------+
+ | EFI_UNSUPPORTED | After ExitBootServices() has been called, this return   |
+ |                 | code may be returned if no variable storage is          |
+ |                 | supported.                                              |
+ +-----------------+---------------------------------------------------------+
+
+Add the following entry to table 10 ("Global Variables")
+
+ +--------------------------+-------+----------------------------------------+
+ | RuntimeServicesSupported | NV,BS | Bitmask of which calls are implemented |
+ |                          |       | by the firmware during runtime         |
+ |                          |       | services.  See Section 8.5 .           |
+ +--------------------------+-------+----------------------------------------+
+
+In section 8.5, add the following text before the "Related Definitions"
+section:
+
+  If any EFI_RUNTIME_SERVICES calls are not supported for use by the OS during
+  runtime services, the RuntimeServicesSupported variable must be present
+  during boot services, and must contain a bitmask of which calls are or are
+  not supported (see related definitions), where a bit set to 1 indicates that
+  the call is supported, and 0 indicates that it is not.  If this variable is
+  not set, that indicates that all runtime services calls are present.
+
+In section 8.5, add the following text to the end of the "Related Definitions"
+section:
+
+  #define EFI_RT_SUPPORTED_GET_TIME                             0x0001
+  #define EFI_RT_SUPPORTED_SET_TIME                             0x0002
+  #define EFI_RT_SUPPORTED_GET_WAKEUP_TIME                      0x0004
+  #define EFI_RT_SUPPORTED_SET_WAKEUP_TIME                      0x0008
+  #define EFI_RT_SUPPORTED_GET_VARIABLE                         0x0010
+  #define EFI_RT_SUPPORTED_GET_NEXT_VARIABLE_NAME               0x0020
+  #define EFI_RT_SUPPORTED_SET_VARIABLE                         0x0040
+  #define EFI_RT_SUPPORTED_SET_VIRTUAL_ADDRESS_MAP              0x0080
+  #define EFI_RT_SUPPORTED_CONVERT_POINTER                      0x0100
+  #define EFI_RT_SUPPORTED_GET_NEXT_HIGH_MONOTONIC_COUNT        0x0200
+  #define EFI_RT_SUPPORTED_RESET_SYSTEM                         0x0400
+  #define EFI_RT_SUPPORTED_UPDATE_CAPSULE                       0x0800
+  #define EFI_RT_SUPPORTED_QUERY_CAPSULE_CAPABILITIES           0x1000
+  #define EFI_RT_SUPPORTED_QUERY_VARIABLE_INFO                  0x2000
+
+# vim:filetype=mail:tw=78
