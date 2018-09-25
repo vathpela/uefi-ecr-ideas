@@ -78,9 +78,12 @@ Add following entry to the error code tables for each of these functions:
 Add the following entry to table 10 ("Global Variables")
 
  +--------------------------+-------+----------------------------------------+
- | RuntimeServicesSupported | NV,BS | Bitmask of which calls are implemented |
+ | RuntimeServicesSupported | BS,RT | Bitmask of which calls are implemented |
  |                          |       | by the firmware during runtime         |
- |                          |       | services.  See Section 8.5 .           |
+ |                          |       | services.  RT access is required only  |
+ |                          |       | if GetVariable() is implemented by     |
+ |                          |       | runtime services.  See Section 8.5     |
+ |                          |       | Should be treated as read-only.        |
  +--------------------------+-------+----------------------------------------+
 
 In section 8.5, add the following text before the "Related Definitions"
