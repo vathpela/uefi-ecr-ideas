@@ -61,7 +61,8 @@ Add following entry to the error code tables for each of these functions:
 
  +-----------------+---------------------------------------------------------+
  | EFI_UNSUPPORTED | This call is not supported by this platform at the time |
- |                 | the call is made.                                       |
+ |                 | the call is made.  The platform must correctly reflect  |
+ |                 | this behavior in the RuntimeServicesSupported variable. |
  +-----------------+---------------------------------------------------------+
 
 Add following entry to the error code tables for each of these functions:
@@ -72,7 +73,8 @@ Add following entry to the error code tables for each of these functions:
  +-----------------+---------------------------------------------------------+
  | EFI_UNSUPPORTED | After ExitBootServices() has been called, this return   |
  |                 | code may be returned if no variable storage is          |
- |                 | supported.                                              |
+ |                 | supported. The platform must correctly reflect this     |
+ |                 | behavior in the RuntimeServicesSupported variable.      |
  +-----------------+---------------------------------------------------------+
 
 Add the following entry to table 10 ("Global Variables")
@@ -94,7 +96,10 @@ section:
   during boot services, and must contain a bitmask of which calls are or are
   not supported (see related definitions), where a bit set to 1 indicates that
   the call is supported, and 0 indicates that it is not.  If this variable is
-  not set, that indicates that all runtime services calls are present.
+  not set, that indicates that all runtime services calls are present.  If
+  this variable is set, but is smaller than the expected number of bits, the
+  value should be presumed to correctly reflect the low-order bits, and all
+  other bits should be presumed to be 0.
 
 In section 8.5, add the following text to the end of the "Related Definitions"
 section:
