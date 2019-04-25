@@ -1,0 +1,15 @@
+The EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS and the EFI_VARIABLE_
+AUTHENTICATED_WRITE_ACCESS attributes may both be set in the returned Attributes bitmask
+parameter of a GetVariable() call, though it should be noted that the EFI_VARIABLE_
+AUTHENTICATED_WRITE_ACCESS attribute is deprecated and should no longer be used. The
+EFI_VARIABLE_APPEND_WRITE and EFI_VARIABLE_ATOMIC_REPLACE attributes will never be set
+in the returned Attributes bitmask parameter.
+
+Variables stored with the EFI_VARIABLE_ATOMIC_REPLACE attribute set must be guaranteed
+to have been updated in their respective storage unless an error is returned.
+
+Variables stored with the EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS attribute set will return
+metadata in addition to variable data when GetVariable() is called. If a GetVariable() call indicates that
+this attribute is set, the GetVariable() payload must be interpreted according to the metadata headers. In
+addition to the headers described in SetVariable(), the following header is used to indicate what
+certificate may be currently associated with a variable.

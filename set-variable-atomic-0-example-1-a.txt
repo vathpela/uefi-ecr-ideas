@@ -1,0 +1,16 @@
+The Attributes have the following usage rules:
+  • If a preexisting variable is rewritten with different attributes, SetVariable()shall not modify
+    the variable and shall return EFI_INVALID_PARAMETER. The only exception to this is when
+    the only attribute differing is EFI_VARIABLE_APPEND_WRITE. In such cases the call's
+    successful outcome or not is determined by the actual value being written. There are two
+    exceptions to this rule:
+    — If a preexisting variable is rewritten with no access attributes specified, the variable will be deleted.
+    — EFI_VARIABLE_APPEND_WRITE attribute presents a special case. It is acceptable to
+      rewrite the variable with or without EFI_VARIABLE_APPEND_WRITE attribute.
+  • Setting a data variable with no access attributes causes it to be deleted.
+  • EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS is deprecated and should not be used.
+    Platforms should return EFI_UNSUPPORTED if a caller to SetVariable() specifies this attribute.
+  • Unless the EFI_VARIABLE_APPEND_WRITE,
+    EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, or
+    EFI_VARIABLE_ENHANCED_AUTHENTICATED_WRITE_ACCESS attribute is set, setting a data
+    variable with zero DataSize specified, causes it to be deleted.

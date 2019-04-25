@@ -1,0 +1,105 @@
+Title: Reliability improvements for updates to BootOrder and other variables
+Document: UEFI Specification
+Sponsor: Peter Jones, Red Hat, Inc.
+
+=====================================
+Summary
+=====================================
+Summary of Change
+-----------------
+
+The UEFI BootOrder mechanism is used to specify which boot options a system
+firmware should attempt to start and in what order.  Currently, the mechanism
+to set variables has no method to update this variable without an intermediate
+removal.  The same is true of many other variables - SysPrepOrder, ConIn and
+ConOut, the active flag in Boot#### variables, any bit of OsIndications, or
+non-append writes to dbx, which are desirable to allow replacement of of many
+blacklisted UEFI application hashes with a revoked certificate.  At the same
+time, many systems often return an error code when creating a new variable
+with SetVariable() when called after ExitBootServices() and/or
+SetVirtualAddressMap().
+
+This ECR adds a new attribute, EFI_VARIABLE_ATOMIC_REPLACE, for use with
+SetVariable().  With this flag, the platform firmware is instructed to replace
+the old variable with the contents of the Data buffer if and only if the
+contents may be replaced as an atomic operation.
+
+-----------------
+Impact of Change
+-----------------
+This allows an operating system to attempt an atomic update of critical
+variables, falling back on the non-atomic implementation only when atomic
+updates aren't supported by the platform firmware.  On systems implementing
+EFI_VARIABLE_ATOMIC_REPLACE, this removes many failure cases which are often
+seen in the field.
+
+This change is backwards compatible - existing implementations will remain
+compliant, though without support for this feature, and new UEFI applications
+can use either this flag or the old semantics, or this flag with the old
+semantics as a fallback.
+
+=====================================
+Detailed Description of the Change
+=====================================
+
+In section 8.2 ("Variable Services"), under "Related Definitions" (page 231),
+add:
+
+ #define EFI_VARIABLE_ATOMIC_REPLACE		0x00000100
+
+In the "Description" section under GetVariable() (page 231), change the
+following:
+
+ AUTHENTICATED_WRITE_ACCESS attributes may both be set in the returned Attributes bitmask
+ parameter of a GetVariable() call, though it should be noted that the EFI_VARIABLE_
+ AUTHENTICATED_WRITE_ACCESS attribute is deprecated and should no longer be used. The
+-EFI_VARIABLE_APPEND_WRITE attribute will never be set in the returned Attributes bitmask
+-parameter.
++EFI_VARIABLE_APPEND_WRITE and EFI_VARIABLE_ATOMIC_REPLACE attributes will never be set
++in the returned Attributes bitmask parameter.
++
++Variables stored with the EFI_VARIABLE_ATOMIC_REPLACE attribute set must be guaranteed
++to have been updated in their respective storage unless an error is returned.
+
+ Variables stored with the EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS attribute set will return
+ metadata in addition to variable data when GetVariable() is called. If a GetVariable() call indicates that
+
+In the "Description" section under SetVariable() (on page 239), make the
+following change:
+
+ The Attributes have the following usage rules:
+   • If a preexisting variable is rewritten with different attributes, SetVariable() shall not modify
+     the variable and shall return EFI_INVALID_PARAMETER. The only exception to this is when
+-    the only attribute differing is EFI_VARIABLE_APPEND_WRITE. In such cases the call's
+-    successful outcome or not is determined by the actual value being written. There are three
+-    exceptions to this rule:
++    the only attribute differing is EFI_VARIABLE_APPEND_WRITE or EFI_VARIABLE_ATOMIC_REPLACE.
++    In such cases the call's successful outcome or not is determined by the actual value being
++    written. There are two exceptions to this rule:
+     — If a preexisting variable is rewritten with no access attributes specified, the variable will be deleted.
+     — EFI_VARIABLE_APPEND_WRITE attribute presents a special case. It is acceptable to
+       rewrite the variable with or without EFI_VARIABLE_APPEND_WRITE attribute.
++    - EFI_VARIABLE_ATOMIC_REPLACE will cause the variable to be completely replaced if and only
++      if the platform firmware can guarantee replacement is an atomic operation.
+   • Setting a data variable with no access attributes causes it to be deleted.
+   • EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS is deprecated and should not be used.
+     Platforms should return EFI_UNSUPPORTED if a caller to SetVariable() specifies this attribute.
+
+In the "Status Codes Returned" section under SetVariable() (page 241), add the
+following table entries:
+
+ +-----------------------+---------------------------------------------------------+
+ | EFI_ABORTED           | This call was made with the EFI_VARIABLE_ATOMIC_REPLACE |
+ |                       | attribute set, but the platform cannot currently        |
+ |                       | guarantee atomicity.  This status code should not be    |
+ |                       | used in cases where deleting and re-creating the        |
+ |                       | variable should be expected to return another status    |
+ |                       | code such as EFI_OUT_OF_RESOURCES.  In such cases,      |
+ |                       | the other status code should be returned.               |
+ +-----------------------+---------------------------------------------------------+
+ | EFI_INVALID_PARAMETER | This call was made with the EFI_VARIABLE_ATOMIC_REPLACE |
+ |                       | attribute set, but the platform does not support this   |
+ |                       | attribute.                                              |
+ +-----------------------+---------------------------------------------------------+
+
+# vim:filetype=mail:tw=78
