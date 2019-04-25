@@ -1,6 +1,10 @@
 Title: Reliability improvements for updates to BootOrder and other variables
 Document: UEFI Specification
 Sponsor: Peter Jones, Red Hat, Inc.
+Reviewed-by: Javier Martinez Canillas <fmartine@redhat.com>
+Reviewed-by: Mathieu Trudel-Lapierre <mathieu.trudel-lapierre@canonical.com>
+Reviewed-by: Colin Watson <cjwatson@ubuntu.com>
+Reviewed-by: Steve McIntyre <steve@einval.com>
 
 =====================================
 Summary
